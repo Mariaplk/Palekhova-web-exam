@@ -98,7 +98,7 @@ async function loadGoods() {
                     goodsContainer.appendChild(card);
                 });
             }
-            
+                        
             // Проверяем, есть ли еще товары
             if (goods.length < 12) {
                 hasMore = false;
