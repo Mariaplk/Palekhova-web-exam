@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Колесникова Ирина 241-372</title>
+    <!-- Подключаем общие стили -->
+    <link rel="stylesheet" href="../main/style.css">
+    <!-- Подключаем стили для ЛК -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ШАПКА САЙТА -->
+    <header class="header">
+        <div class="container">
+            <div class="header__logo">
+                <a href="../index.html">
+                    <h1>ExamShop</h1>
+                </a>
+            </div>
+            <div class="header__icons">
+                <a href="../index.html" class="icon-home" title="На главную"></a>
+                <a href="../cart/index.html" class="icon-cart" title="Корзина">
+                    <span class="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ОБЛАСТЬ ДЛЯ УВЕДОМЛЕНИЙ -->
+    <div id="notification-area" class="notification-area"></div>
+
+    <main class="main">
+        <div class="container">
+            <!-- БЛОК СО СПИСКОМ ЗАКАЗОВ -->
+            <section class="orders-section">
+                <h2>Мои заказы</h2>
+                <div id="orders-container">
+                    <!-- Сюда будет загружаться таблица с заказами -->
+                    <div class="loading">Загрузка заказов...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ПОДВАЛ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__info">
+                <p>&copy; 2026 ExamShop - Интернет-магазин для сдачи экзамена</p>
+                <p>Контактный телефон: +7 (999) 123-45-67</p>
+                <p>Email: info@examshop.ru</p>
+                <p>Адрес: г. Москва, ул. Большая Семёновская, д. 38</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========== МОДАЛЬНЫЕ ОКНА ========== -->
+    
+    <!-- Модальное окно ПРОСМОТРА заказа -->
+    <div id="view-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Просмотр заказа #<span id="view-order-id"></span></h3>
+            <div id="view-order-details" class="order-details">
+                <!-- Детали заказа будут подставлены скриптом -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно РЕДАКТИРОВАНИЯ заказа -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Редактирование заказа #<span id="edit-order-id"></span></h3>
+            <form id="edit-order-form">
+                <div class="form-group">
+                    <label for="edit-full-name">Имя *</label>
+                    <input type="text" id="edit-full-name" name="full_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-email">Email *</label>
+                    <input type="email" id="edit-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-phone">Телефон *</label>
+                    <input type="text" id="edit-phone" name="phone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-delivery-address">Адрес доставки *</label>
+                    <input type="text" id="edit-delivery-address" name="delivery_address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-delivery-date">Дата доставки *</label>
+                    <input type="date" id="edit-delivery-date" name="delivery_date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-delivery-interval">Интервал доставки *</label>
+                    <select id="edit-delivery-interval" name="delivery_interval" required>
+                        <option value="08:00-12:00">08:00 - 12:00</option>
+                        <option value="12:00-14:00">12:00 - 14:00</option>
+                        <option value="14:00-18:00">14:00 - 18:00</option>
+                        <option value="18:00-22:00">18:00 - 22:00</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-comment">Комментарий</label>
+                    <textarea id="edit-comment" name="comment" rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Подтверждение удаления</h3>
+            <p>Вы уверены, что хотите удалить заказ #<span id="delete-order-id"></span>?</p>
+            <div class="modal-buttons">
+                <button id="confirm-delete" class="btn-danger">Да, удалить</button>
+                <button id="cancel-delete" class="btn-secondary">Нет, отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
+    <script src="../js/api.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="order-history.js"></script>
+    <script src="zaka3.js"></script>
+</body>
+</html>
