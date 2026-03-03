@@ -3,43 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интернет-магазин</title>
-    <!-- Подключаем внешний файл стилей (CSS) -->
-    <link rel="stylesheet" href="styles.css">
+    <title>Интернет-магазин "Экзамен-2025" - Главная</title>
+    <!-- Подключение стилей -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-
-    <!-- Хедер страницы -->
-    <header>
-        <!-- Заголовок страницы -->
-        <h1>Интернет-магазин</h1>
-        <nav>
-            <!-- Ссылка на главную страницу -->
-            <a href="index.html">Главная</a>
-            <!-- Ссылка на страницу корзины, расположенную в папке cart -->
-            <a href="cart/cart.html">Корзина</a>
-        </nav>
+    <!-- Хедер с логотипом, поиском и иконками -->
+    <header class="header">
+        <div class="container">
+            <div class="header__logo">
+                <a href="index.html">
+                    <h1>ExamShop</h1>
+                </a>
+            </div>
+            <div class="header__search">
+                <input type="text" id="search-input" placeholder="Поиск товаров...">
+                <button id="search-btn">Найти</button>
+            </div>
+            <div class="header__icons">
+                <a href="cart/index.html" class="icon-cart" title="Корзина">
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="LK/index.html" class="icon-profile" title="Личный кабинет"></a>
+            </div>
+        </div>
     </header>
 
-    <!-- Секция поиска товаров -->
-    <section class="search-bar">
-        <!-- Поле ввода для поиска товаров -->
-        <input type="text" id="productSearch" placeholder="Введите название товара для поиска">
-        <!-- Кнопка для активации поиска -->
-        <button id="searchBtn">Найти</button>
-    </section>
+    <!-- Область для уведомлений -->
+    <div id="notification-area" class="notification-area"></div>
 
-    <!-- Контейнер для отображения товаров -->
-    <section id="productContainer">
-        <!-- Здесь будут динамически добавляться товары через JavaScript -->
-    </section>
+    <main class="main">
+        <div class="container">
+            <!-- Сайдбар с фильтрацией -->
+            <aside class="sidebar">
+                <h2>Фильтры</h2>
+                <form id="filter-form">
+                    <div class="filter-section">
+                        <h3>Категория товара</h3>
+                        <div id="categories-list">
+                            <!-- Категории будут загружены через API -->
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <h3>Стоимость</h3>
+                        <div class="price-range">
+                            <input type="number" id="price-from" placeholder="От">
+                            <input type="number" id="price-to" placeholder="До">
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="discount-only"> Товары со скидкой
+                        </label>
+                    </div>
+                    
+                    <button type="submit" id="apply-filters">Применить</button>
+                </form>
+            </aside>
 
-    <!-- Футер страницы -->
-    <footer>
-        <p>&copy; 2025 Интернет-магазин. Все права защищены.</p>
+            <!-- Каталог товаров -->
+            <section class="catalog">
+                <div class="catalog__header">
+                    <h2>Каталог товаров</h2>
+                    <select id="sort-select">
+                        <option value="default">По умолчанию</option>
+                        <option value="price-asc">Сначала недорогие</option>
+                        <option value="price-desc">Сначала дорогие</option>
+                        <option value="rating-desc">По рейтингу</option>
+                        <option value="name-asc">По названию</option>
+                    </select>
+                </div>
+                
+                <div id="goods-container" class="goods-grid">
+                    <!-- Товары будут загружены через API -->
+                </div>
+                
+                <button id="load-more" class="load-more-btn">Загрузить ещё</button>
+            </section>
+        </div>
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__info">
+                <p>&copy; 2026 ExamShop - интернет-магазин для сдачи экзамена</p>
+                <p>Контактный телефон: +7 (999) 123-45-67</p>
+                <p>Email: info@examshop.ru</p>
+                <p>Адрес: г. Москва, ул. Большая Семёновская, д. 38</p>
+            </div>
+        </div>
     </footer>
 
-    <!-- Подключаем внешний файл JavaScript для работы с логикой сайта -->
-    <script src="main.js"></script>
+    <!-- Подключение скриптов -->
+    <script src="js/api.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
