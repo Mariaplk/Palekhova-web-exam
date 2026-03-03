@@ -216,4 +216,25 @@
     text-align: center;
     padding: 50px;
     color: #7f8c8d;
-    grid-column
+    grid-column: 1 / -1;
+}
+
+/* ========== АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ ========== */
+@media (max-width: 768px) {
+    .cart-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    
+    .order-section {
+        padding: 20px;
+    }
+    
+    .order-summary p {
+        font-size: 1rem;
+    }
+}
