@@ -31,7 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // При изменении сортировки начинаем с первой страницы
             currentPage = 1;
             hasMore = true;
-            goodsContainer.innerHTML = '<div class="loading">Загрузка товаров...</div>';
+            if (goodsContainer) {
+                goodsContainer.innerHTML = '<div class="loading">Загрузка товаров...</div>';
+            }
             loadGoods();
         });
     }
@@ -53,6 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
  * ЗАГРУЗКА ТОВАРОВ С УЧЕТОМ ПАГИНАЦИИ
  */
 async function loadGoods() {
+    // Проверяем, есть ли контейнер
+    if (!goodsContainer) {
+        console.error('Контейнер goods-container не найден!');
+        return;
+    }
+    
     if (isLoading) return;
     
     isLoading = true;
@@ -68,13 +76,34 @@ async function loadGoods() {
             per_page: 12
         };
         
-        // Добавляем поисковый запрос, если есть
-        if (window.searchQuery) {
-            params.query = window.searchQuery;
+        console.log(`Загружаем страницу ${currentPage}...`);
+        
+        // Пробуем загрузить товары
+        let goods;
+        try {
+            goods = await getGoods(params);
+        } catch (error) {
+            console.error('Ошибка при вызове getGoods:', error);
+            goodsContainer.innerHTML = '<p class="no-goods">Ошибка соединения с сервером. Проверьте интернет или API ключ.</p>';
+            isLoading = false;
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = 'Повторить попытку';
+            }
+            return;
         }
         
-        console.log(`Загружаем страницу ${currentPage}...`);
-        const goods = await getGoods(params);
+        // Проверяем, что получили массив
+        if (!goods || !Array.isArray(goods)) {
+            console.error('Получены неверные данные от сервера:', goods);
+            goodsContainer.innerHTML = '<p class="no-goods">Ошибка формата данных от сервера</p>';
+            isLoading = false;
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = hasMore ? 'Загрузить ещё' : 'Все товары загружены';
+            }
+            return;
+        }
         
         if (goods.length === 0) {
             hasMore = false;
@@ -90,24 +119,27 @@ async function loadGoods() {
                 displayGoods(goods, currentPage === 1);
             } else {
                 // Если функция не найдена, используем простой вывод
+                console.warn('Функция displayGoods не найдена, используем createSimpleCard');
                 if (currentPage === 1) {
                     goodsContainer.innerHTML = '';
                 }
                 goods.forEach(good => {
                     const card = createSimpleCard(good);
-                    goodsContainer.appendChild(card);
+                    if (card) {
+                        goodsContainer.appendChild(card);
+                    }
                 });
             }
-                        
+            
             // Проверяем, есть ли еще товары
             if (goods.length < 12) {
                 hasMore = false;
             }
         }
     } catch (error) {
-        console.error('Ошибка загрузки товаров:', error);
+        console.error('Необработанная ошибка в loadGoods:', error);
         if (currentPage === 1) {
-            goodsContainer.innerHTML = '<p class="no-goods">Ошибка загрузки. Проверьте API ключ.</p>';
+            goodsContainer.innerHTML = '<p class="no-goods">Произошла ошибка. Обновите страницу.</p>';
         }
     } finally {
         isLoading = false;
@@ -133,7 +165,9 @@ function reloadCatalog() {
     currentPage = 1;
     hasMore = true;
     allGoods = [];
-    goodsContainer.innerHTML = '<div class="loading">Загрузка товаров...</div>';
+    if (goodsContainer) {
+        goodsContainer.innerHTML = '<div class="loading">Загрузка товаров...</div>';
+    }
     loadGoods();
 }
 
@@ -161,8 +195,13 @@ function updateCartCount() {
  * @returns {Array} - массив ID товаров
  */
 function getCart() {
-    const cart = localStorage.getItem('cart');
-    return cart ? JSON.parse(cart) : [];
+    try {
+        const cart = localStorage.getItem('cart');
+        return cart ? JSON.parse(cart) : [];
+    } catch (e) {
+        console.error('Ошибка чтения корзины:', e);
+        return [];
+    }
 }
 
 /**
@@ -170,8 +209,12 @@ function getCart() {
  * @param {Array} cart - массив ID товаров
  */
 function saveCart(cart) {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
+    try {
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+    } catch (e) {
+        console.error('Ошибка сохранения корзины:', e);
+    }
 }
 
 /**
@@ -180,20 +223,46 @@ function saveCart(cart) {
  * @returns {HTMLElement} - DOM элемент
  */
 function createSimpleCard(good) {
+    if (!good || !good.id) {
+        console.error('Неверные данные товара:', good);
+        return null;
+    }
+    
     const card = document.createElement('div');
     card.className = 'good-card';
     card.dataset.id = good.id;
     
-    const currentPrice = good.discount_price || good.actual_price;
+    const currentPrice = good.discount_price || good.actual_price || 0;
+    const imageUrl = good.image_url || 'https://via.placeholder.com/200';
+    const title = good.name || 'Без названия';
+    const rating = good.rating || 0;
     
     card.innerHTML = `
-        <img src="${good.image_url}" alt="${good.name}" class="good-card__image"
+        <img src="${imageUrl}" alt="${title}" class="good-card__image"
              onerror="this.src='https://via.placeholder.com/200'">
-        <h3 class="good-card__title">${good.name.substring(0, 40)}${good.name.length > 40 ? '...' : ''}</h3>
-        <div class="good-card__rating">★ ${good.rating}</div>
+        <h3 class="good-card__title">${title.substring(0, 40)}${title.length > 40 ? '...' : ''}</h3>
+        <div class="good-card__rating">★ ${rating}</div>
         <div class="good-card__price">${currentPrice} ₽</div>
         <button class="good-card__button">В корзину</button>
     `;
+    
+    // Добавляем обработчик на кнопку
+    const button = card.querySelector('.good-card__button');
+    if (button) {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const cart = getCart();
+            if (!cart.includes(good.id)) {
+                cart.push(good.id);
+                saveCart(cart);
+                button.textContent = '✓ В корзине';
+                button.classList.add('in-cart');
+                if (typeof notifications !== 'undefined') {
+                    notifications.success('Товар добавлен в корзину');
+                }
+            }
+        });
+    }
     
     return card;
 }
@@ -205,5 +274,6 @@ window.reloadCatalog = reloadCatalog;
 window.updateCartCount = updateCartCount;
 window.getCart = getCart;
 window.saveCart = saveCart;
+window.createSimpleCard = createSimpleCard;
 
 console.log('✅ display-products.js полностью загружен и готов к работе');
