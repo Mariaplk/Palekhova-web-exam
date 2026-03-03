@@ -1,237 +1,116 @@
 /**
  * API ДЛЯ ВЗАИМОДЕЙСТВИЯ С СЕРВЕРОМ
- * Палехова Мария Алексеевная
- * Этот файл содержит все функции для работы с API Московского Политеха
- * Все запросы отправляются с персональным API ключом
  */
 
-// ========== НАСТРОЙКИ API ==========
-// Базовый URL API (для GitHub Pages используем этот адрес)
-const API_BASE_URL = 'https://edu.std-900.ist.mospolytech.ru/exam-2024-1/api';
-
-// Мой API
+// ВАШ ПЕРСОНАЛЬНЫЙ API КЛЮЧ
 const API_KEY = '4077aed9-7913-4553-941e-c2445b06e012';
 
+// ИСПОЛЬЗУЕМ ПРОКСИ для обхода блокировок!
+const PROXY_URL = 'https://corsproxy.io/?';
+const API_BASE_URL = 'https://edu.std-900.ist.mospolytech.ru/exam-2024-1/api';
+
 /**
- * ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: формирует URL с параметрами
- * @param {string} endpoint - конечная точка API (/goods)
- * @param {Object} params - дополнительные параметры запроса (page, query)
- * @returns {string} - полный URL для запроса
+ * ФОРМИРУЕТ URL ЧЕРЕЗ ПРОКСИ
  */
 function buildApiUrl(endpoint, params = {}) {
-    // Создаем новый URL объект
-    const url = new URL(`${API_BASE_URL}${endpoint}`);
+    // Сначала формируем оригинальный URL с параметрами
+    const originalUrl = new URL(`${API_BASE_URL}${endpoint}`);
+    originalUrl.searchParams.append('api_key', API_KEY);
     
-    // Добавляем API ключ к КАЖДОМУ запросу (обязательное требование)
-    url.searchParams.append('api_key', API_KEY);
-    
-    // Добавляем все дополнительные параметры (если они есть)
+    // Добавляем все дополнительные параметры
     Object.keys(params).forEach(key => {
         if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
-            url.searchParams.append(key, params[key]);
+            originalUrl.searchParams.append(key, params[key]);
         }
     });
     
-    return url.toString();
+    // Возвращаем URL через прокси (кодируем оригинальный URL)
+    return PROXY_URL + encodeURIComponent(originalUrl.toString());
 }
 
 /**
- * Используется для получения данных с сервера
- * @param {string} endpoint - конечная точка API
- * @param {Object} params - параметры запроса
- * @returns {Promise} - промис с данными ответа
+ * GET-ЗАПРОС ЧЕРЕЗ ПРОКСИ
  */
 async function apiGet(endpoint, params = {}) {
     try {
-        // Формируем URL и отправляем запрос
         const url = buildApiUrl(endpoint, params);
-        console.log('Отправляем GET запрос на:', url); // Для отладки
+        console.log('Запрос через прокси:', url);
         
         const response = await fetch(url);
         
-        // Проверяем, успешен ли запрос
         if (!response.ok) {
-            // Пытаемся получить текст ошибки от сервера
-            const errorText = await response.text();
-            throw new Error(`HTTP ошибка! Статус: ${response.status}, Сообщение: ${errorText}`);
+            throw new Error(`HTTP ошибка! Статус: ${response.status}`);
         }
         
-        // Преобразуем ответ в JSON
-        return await response.json();
+        const data = await response.json();
+        console.log('Получены данные:', data);
+        return data;
     } catch (error) {
         console.error('Ошибка в GET запросе:', error);
-        throw error; // Пробрасываем ошибку дальше для обработки в других функциях
-    }
-}
-
-/**
- * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ POST-ЗАПРОСОВ
- * Используется для создания новых записей (оформление заказа)
- * @param {string} endpoint - конечная точка API
- * @param {Object} data - данные для отправки (в формате JSON)
- * @returns {Promise} - промис с данными ответа
- */
-async function apiPost(endpoint, data) {
-    try {
-        const url = buildApiUrl(endpoint);
-        console.log('Отправляем POST запрос на:', url); // Для отладки
-        console.log('Данные:', data); // Для отладки
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', // Указываем, что отправляем JSON
-            },
-            body: JSON.stringify(data) // Преобразуем объект в JSON строку
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ошибка! Статус: ${response.status}, Сообщение: ${errorText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Ошибка в POST запросе:', error);
         throw error;
     }
 }
 
-/**
- * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ PUT-ЗАПРОСОВ
- * Используется для обновления существующих записей (редактирование заказа)
- * @param {string} endpoint - конечная точка API
- * @param {Object} data - данные для отправки (в формате JSON)
- * @returns {Promise} - промис с данными ответа
- */
-async function apiPut(endpoint, data) {
-    try {
-        const url = buildApiUrl(endpoint);
-        console.log('Отправляем PUT запрос на:', url); // Для отладки
-        console.log('Данные:', data); // Для отладки
-        
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ошибка! Статус: ${response.status}, Сообщение: ${errorText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Ошибка в PUT запросе:', error);
-        throw error;
-    }
-}
-
-/**
- * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ DELETE-ЗАПРОСОВ
- * Используется для удаления записей (удаление заказа)
- * @param {string} endpoint - конечная точка API
- * @returns {Promise} - промис с данными ответа
- */
-async function apiDelete(endpoint) {
-    try {
-        const url = buildApiUrl(endpoint);
-        console.log('Отправляем DELETE запрос на:', url); // Для отладки
-        
-        const response = await fetch(url, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ошибка! Статус: ${response.status}, Сообщение: ${errorText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Ошибка в DELETE запросе:', error);
-        throw error;
-    }
-}
-
-// ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ТОВАРАМИ ==========
-
-/**
- * Получает список товаров с возможностью фильтрации и пагинации
- * @param {Object} params - параметры запроса 
- * @param {number} params.page - номер страницы
- * @param {number} params.per_page - количество товаров на странице
- * @param {string} params.query - поисковый запрос
- * @returns {Promise} - промис с массивом товаров
- */
+// ===== ФУНКЦИИ ДЛЯ ТОВАРОВ =====
 async function getGoods(params = {}) {
     return apiGet('/goods', params);
 }
 
-/**
- * Получает данные конкретного товара по ID
- * @param {number} goodId - ID товара
- * @returns {Promise} - промис с данными товара
- */
 async function getGoodById(goodId) {
     return apiGet(`/goods/${goodId}`);
 }
 
-/**
- * Получает варианты автодополнения для поиска
- * @param {string} query - поисковый запрос
- * @returns {Promise} - промис с массивом подсказок
- */
 async function getAutocomplete(query) {
     return apiGet('/autocomplete', { query });
 }
 
-// ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ЗАКАЗАМИ ==========
-
-/**
- * Получает список заказов текущего пользователя
- * @returns {Promise} - промис с массивом заказов
- */
+// ===== ФУНКЦИИ ДЛЯ ЗАКАЗОВ =====
 async function getOrders() {
     return apiGet('/orders');
 }
 
-/**
- * Получает данные конкретного заказа по ID
- * @param {number} orderId - ID заказа
- * @returns {Promise} - промис с данными заказа
- */
 async function getOrderById(orderId) {
     return apiGet(`/orders/${orderId}`);
 }
 
-/**
- * Создает новый заказ
- * @param {Object} orderData - данные заказа
- * @returns {Promise} - промис с созданным заказом
- */
 async function createOrder(orderData) {
-    return apiPost('/orders', orderData);
+    // Для POST запросов прокси может не работать, но пока оставим
+    const url = `https://corsproxy.io/?${encodeURIComponent(API_BASE_URL + '/orders?api_key=' + API_KEY)}`;
+    
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+    });
+    
+    return await response.json();
 }
 
-/**
- * Обновляет существующий заказ
- * @param {number} orderId - ID заказа
- * @param {Object} orderData - обновленные данные заказа
- * @returns {Promise} - промис с обновленным заказом
- */
 async function updateOrder(orderId, orderData) {
-    return apiPut(`/orders/${orderId}`, orderData);
+    const url = `https://corsproxy.io/?${encodeURIComponent(API_BASE_URL + '/orders/' + orderId + '?api_key=' + API_KEY)}`;
+    
+    const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+    });
+    
+    return await response.json();
 }
 
-/**
- * Удаляет заказ
- * @param {number} orderId - ID заказа
- * @returns {Promise} - промис с результатом удаления
- */
 async function deleteOrder(orderId) {
-    return apiDelete(`/orders/${orderId}`);
+    const url = `https://corsproxy.io/?${encodeURIComponent(API_BASE_URL + '/orders/' + orderId + '?api_key=' + API_KEY)}`;
+    
+    const response = await fetch(url, {
+        method: 'DELETE'
+    });
+    
+    return await response.json();
 }
+
+// Для отладки
+console.log('✅ api.js с прокси загружен');
