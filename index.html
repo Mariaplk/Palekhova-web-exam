@@ -3,30 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин онлайн</title>
+    <title>Интернет-магазин</title>
+    <!-- Подключаем внешний файл стилей (CSS) -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+    <!-- Хедер страницы -->
     <header>
-        <h1>Добро пожаловать в наш магазин!</h1>
-        <p>Широкий ассортимент товаров для вашего удобства.</p>
+        <!-- Заголовок страницы -->
+        <h1>Интернет-магазин</h1>
+        <nav>
+            <!-- Ссылка на главную страницу -->
+            <a href="index.html">Главная</a>
+            <!-- Ссылка на страницу корзины, расположенную в папке cart -->
+            <a href="cart/cart.html">Корзина</a>
+        </nav>
     </header>
 
-    <!-- Форма поиска товаров -->
+    <!-- Секция поиска товаров -->
     <section class="search-bar">
+        <!-- Поле ввода для поиска товаров -->
         <input type="text" id="productSearch" placeholder="Введите название товара для поиска">
+        <!-- Кнопка для активации поиска -->
         <button id="searchBtn">Найти</button>
     </section>
 
     <!-- Контейнер для отображения товаров -->
     <section id="productContainer">
-        <!-- Здесь будут отображаться карточки товаров -->
+        <!-- Здесь будут динамически добавляться товары через JavaScript -->
     </section>
 
+    <!-- Футер страницы -->
     <footer>
         <p>&copy; 2025 Интернет-магазин. Все права защищены.</p>
     </footer>
 
+    <!-- Подключаем внешний файл JavaScript для работы с логикой сайта -->
     <script src="main.js"></script>
 </body>
 </html>
