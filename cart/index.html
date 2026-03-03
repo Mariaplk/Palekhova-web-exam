@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина - ExamShop</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/cart.css">
+</head>
+<body>
+    <!-- Хедер с логотипом и иконками -->
+    <header class="header">
+        <div class="container">
+            <div class="header__logo">
+                <a href="../index.html">
+                    <h1>ExamShop</h1>
+                </a>
+            </div>
+            <div class="header__icons">
+                <a href="../index.html" class="icon-home" title="На главную"></a>
+                <a href="../LK/index.html" class="icon-profile" title="Личный кабинет"></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Область для уведомлений -->
+    <div id="notification-area" class="notification-area"></div>
+
+    <main class="main">
+        <div class="container">
+            <!-- Блок с содержимым корзины -->
+            <section class="cart-section">
+                <h2>Корзина</h2>
+                <div id="cart-container" class="cart-grid">
+                    <!-- Товары в корзине будут загружены из localStorage и API -->
+                </div>
+            </section>
+
+            <!-- Блок с формой оформления заказа -->
+            <section class="order-section">
+                <h2>Оформление заказа</h2>
+                <form id="order-form">
+                    <div class="form-group">
+                        <label for="full-name">Имя *</label>
+                        <input type="text" id="full-name" name="full_name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Телефон *</label>
+                        <input type="text" id="phone" name="phone" required placeholder="+7 (999) 123-45-67">
+                    </div>
+                    
+                    <div class="form-group checkbox">
+                        <label>
+                            <input type="checkbox" id="subscribe" name="subscribe"> Получать рассылку
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delivery-address">Адрес доставки *</label>
+                        <input type="text" id="delivery-address" name="delivery_address" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="delivery-date">Дата доставки *</label>
+                            <input type="date" id="delivery-date" name="delivery_date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="delivery-interval">Интервал доставки *</label>
+                            <select id="delivery-interval" name="delivery_interval" required>
+                                <option value="">Выберите интервал</option>
+                                <option value="08:00-12:00">08:00 - 12:00</option>
+                                <option value="12:00-14:00">12:00 - 14:00</option>
+                                <option value="14:00-18:00">14:00 - 18:00</option>
+                                <option value="18:00-22:00">18:00 - 22:00</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="comment">Комментарий к заказу</label>
+                        <textarea id="comment" name="comment" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="order-summary">
+                        <p>Сумма заказа: <span id="total-goods-price">0</span> ₽</p>
+                        <p>Стоимость доставки: <span id="delivery-price">200</span> ₽</p>
+                        <p class="total"><strong>Итого: <span id="total-order-price">0</span> ₽</strong></p>
+                    </div>
+                    
+                    <button type="submit" id="submit-order" class="btn-primary">Оформить заказ</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__info">
+                <p>&copy; 2026 ExamShop - интернет-магазин для сдачи экзамена</p>
+                <p>Контактный телефон: +7 (999) 123-45-67</p>
+                <p>Email: info@examshop.ru</p>
+                <p>Адрес: г. Москва, ул. Большая Семёновская, д. 38</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Подключение скриптов -->
+    <script src="../js/api.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/cart.js"></script>
+</body>
+</html>
