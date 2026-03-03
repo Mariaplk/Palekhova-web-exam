@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интернет-магазин - Главная</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+<body>
+    <!-- Хедер с логотипом, поиском и иконками -->
+    <header class="header">
+        <div class="container">
+            <div class="header__logo">
+                <a href="../index.html">
+                    <h1>ExamShop</h1>
+                </a>
+            </div>
+            <div class="header__search">
+                <input type="text" id="search-input" placeholder="Поиск товаров...">
+                <button id="search-btn">Найти</button>
+            </div>
+            <div class="header__icons">
+                <a href="../cart/index.html" class="icon-cart" title="Корзина">
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="../LK/index.html" class="icon-profile" title="Личный кабинет"></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Область для уведомлений -->
+    <div id="notification-area" class="notification-area"></div>
+
+    <main class="main">
+        <div class="container">
+            <!-- Сайдбар с фильтрацией -->
+            <aside class="sidebar">
+                <h2>Фильтры</h2>
+                <form id="filter-form">
+                    <div class="filter-section">
+                        <h3>Категория товара</h3>
+                        <div id="categories-list">
+                            <!-- Категории будут загружены через API -->
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <h3>Стоимость</h3>
+                        <div class="price-range">
+                            <input type="number" id="price-from" placeholder="От">
+                            <input type="number" id="price-to" placeholder="До">
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="discount-only"> Товары со скидкой
+                        </label>
+                    </div>
+                    
+                    <button type="submit" id="apply-filters">Применить</button>
+                </form>
+            </aside>
+
+            <!-- Каталог товаров -->
+            <section class="catalog">
+                <div class="catalog__header">
+                    <h2>Каталог товаров</h2>
+                    <select id="sort-select">
+                        <option value="default">По умолчанию</option>
+                        <option value="price-asc">Сначала недорогие</option>
+                        <option value="price-desc">Сначала дорогие</option>
+                        <option value="rating-desc">По рейтингу</option>
+                        <option value="name-asc">По названию</option>
+                    </select>
+                </div>
+                
+                <div id="goods-container" class="goods-grid">
+                    <!-- Товары будут загружены через API -->
+                </div>
+                
+                <button id="load-more" class="load-more-btn">Загрузить ещё</button>
+            </section>
+        </div>
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__info">
+                <p>&copy; 2026 ExamShop - интернет-магазин для сдачи экзамена</p>
+                <p>Контактный телефон: +7 (999) 123-45-67</p>
+                <p>Email: info@examshop.ru</p>
+                <p>Адрес: г. Москва, ул. Большая Семёновская, д. 38</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Подключение скриптов -->
+    <script src="../js/api.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>
