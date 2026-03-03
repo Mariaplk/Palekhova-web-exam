@@ -3,24 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интернет-магазин "Экзамен-2025" - Главная</title>
-    <!-- Подключение стилей -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/main.css">
+    <!-- Заголовок страницы с фамилией и группой (по заданию) -->
+    <title>Колесникова Ирина Владимировна 241-372 - Главная</title>
+    <!-- Подключаем стили из папки main -->
+    <link rel="stylesheet" href="main/style.css">
+    <!-- Добавляем небольшой дополнительный стиль для главной -->
+    <style>
+        /* Эти стили только для главной страницы */
+        .hero {
+            background-color: #f8f9fa;
+            padding: 40px 0;
+            margin-bottom: 30px;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .hero h2 {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .hero p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
-    <!-- Хедер с логотипом, поиском и иконками -->
+    <!-- ШАПКА САЙТА (HEADER) - одинаковая для всех страниц -->
     <header class="header">
         <div class="container">
+            <!-- Логотип/название магазина -->
             <div class="header__logo">
                 <a href="index.html">
                     <h1>ExamShop</h1>
                 </a>
             </div>
+            <!-- Поисковая строка (только на главной) -->
             <div class="header__search">
                 <input type="text" id="search-input" placeholder="Поиск товаров...">
                 <button id="search-btn">Найти</button>
             </div>
+            <!-- Иконки для перехода в корзину и личный кабинет -->
             <div class="header__icons">
                 <a href="cart/index.html" class="icon-cart" title="Корзина">
                     <span class="cart-count">0</span>
@@ -30,67 +53,83 @@
         </div>
     </header>
 
-    <!-- Область для уведомлений -->
+    <!-- ОБЛАСТЬ ДЛЯ УВЕДОМЛЕНИЙ (появляется при действиях пользователя) -->
     <div id="notification-area" class="notification-area"></div>
 
+    <!-- ОСНОВНОЕ СОДЕРЖИМОЕ СТРАНИЦЫ -->
     <main class="main">
         <div class="container">
-            <!-- Сайдбар с фильтрацией -->
+            <!-- Приветственный баннер (для красоты) -->
+            <div class="hero">
+                <h2>Добро пожаловать в ExamShop!</h2>
+                <p>Лучшие товары по лучшим ценам. Скидки до 50%</p>
+            </div>
+
+            <!-- БОКОВАЯ ПАНЕЛЬ С ФИЛЬТРАЦИЕЙ (сайдбар) -->
             <aside class="sidebar">
                 <h2>Фильтры</h2>
                 <form id="filter-form">
+                    <!-- Фильтр по категориям (чекбоксы) -->
                     <div class="filter-section">
                         <h3>Категория товара</h3>
                         <div id="categories-list">
-                            <!-- Категории будут загружены через API -->
+                            <!-- Категории будут загружены автоматически через API -->
+                            <p>Загрузка категорий...</p>
                         </div>
                     </div>
                     
+                    <!-- Фильтр по цене (от и до) -->
                     <div class="filter-section">
-                        <h3>Стоимость</h3>
+                        <h3>Стоимость (₽)</h3>
                         <div class="price-range">
-                            <input type="number" id="price-from" placeholder="От">
-                            <input type="number" id="price-to" placeholder="До">
+                            <input type="number" id="price-from" placeholder="От" min="0">
+                            <input type="number" id="price-to" placeholder="До" min="0">
                         </div>
                     </div>
                     
+                    <!-- Фильтр "Товары со скидкой" -->
                     <div class="filter-section">
                         <label class="checkbox-label">
-                            <input type="checkbox" id="discount-only"> Товары со скидкой
+                            <input type="checkbox" id="discount-only"> Только со скидкой
                         </label>
                     </div>
                     
-                    <button type="submit" id="apply-filters">Применить</button>
+                    <!-- Кнопка применения фильтров -->
+                    <button type="submit" id="apply-filters" class="btn-primary">Применить фильтры</button>
                 </form>
             </aside>
 
-            <!-- Каталог товаров -->
+            <!-- КАТАЛОГ ТОВАРОВ -->
             <section class="catalog">
                 <div class="catalog__header">
                     <h2>Каталог товаров</h2>
-                    <select id="sort-select">
+                    <!-- Выпадающий список для сортировки -->
+                    <select id="sort-select" class="sort-select">
                         <option value="default">По умолчанию</option>
                         <option value="price-asc">Сначала недорогие</option>
                         <option value="price-desc">Сначала дорогие</option>
-                        <option value="rating-desc">По рейтингу</option>
-                        <option value="name-asc">По названию</option>
+                        <option value="rating-desc">По рейтингу (высокий)</option>
+                        <option value="name-asc">По названию (А-Я)</option>
                     </select>
                 </div>
                 
+                <!-- Контейнер для карточек товаров -->
                 <div id="goods-container" class="goods-grid">
-                    <!-- Товары будут загружены через API -->
+                    <!-- Товары будут загружены через API и отображены здесь -->
+                    <div class="loading">Загрузка товаров...</div>
                 </div>
                 
+                <!-- Кнопка "Загрузить ещё" для пагинации -->
                 <button id="load-more" class="load-more-btn">Загрузить ещё</button>
             </section>
         </div>
     </main>
 
-    <!-- Футер -->
+    <!-- ПОДВАЛ САЙТА (FOOTER) - одинаковый для всех страниц -->
     <footer class="footer">
         <div class="container">
             <div class="footer__info">
-                <p>&copy; 2026 ExamShop - интернет-магазин для сдачи экзамена</p>
+                <p>&copy; 2026 ExamShop - Интернет-магазин для сдачи экзамена</p>
                 <p>Контактный телефон: +7 (999) 123-45-67</p>
                 <p>Email: info@examshop.ru</p>
                 <p>Адрес: г. Москва, ул. Большая Семёновская, д. 38</p>
@@ -98,9 +137,14 @@
         </div>
     </footer>
 
-    <!-- Подключение скриптов -->
+    <!-- ПОДКЛЮЧЕНИЕ JAVASCRIPT ФАЙЛОВ -->
+    <!-- Сначала подключаем API (работу с сервером) -->
     <script src="js/api.js"></script>
+    <!-- Потом уведомления -->
     <script src="js/notifications.js"></script>
-    <script src="js/main.js"></script>
+    <!-- И только потом скрипты для главной страницы -->
+    <script src="main/display-products.js"></script>
+    <script src="main/filter-products.js"></script>
+    <script src="main/карточки.js"></script>
 </body>
 </html>
