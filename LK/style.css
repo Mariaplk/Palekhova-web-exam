@@ -1,0 +1,243 @@
+/* ========== СТИЛИ ДЛЯ СТРАНИЦЫ ЛИЧНОГО КАБИНЕТА ========== */
+
+.orders-section h2 {
+    margin-bottom: 25px;
+    color: #2c3e50;
+    font-size: 1.8rem;
+}
+
+/* Контейнер для таблицы (горизонтальная прокрутка на мобильных) */
+.orders-table-container {
+    overflow-x: auto;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Таблица заказов */
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    min-width: 1000px; /* Заставляет таблицу прокручиваться на мобильных */
+}
+
+.orders-table thead {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.orders-table th {
+    padding: 15px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: left;
+}
+
+.orders-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.orders-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.orders-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Кнопки действий с заказами */
+.order-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    color: white;
+    min-width: 80px;
+}
+
+.view-btn {
+    background-color: #3498db;
+}
+
+.view-btn:hover {
+    background-color: #2980b9;
+}
+
+.edit-btn {
+    background-color: #f39c12;
+}
+
+.edit-btn:hover {
+    background-color: #e67e22;
+}
+
+.delete-btn {
+    background-color: #e74c3c;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Пустой список заказов */
+.no-orders {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    color: #7f8c8d;
+}
+
+.no-orders p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+/* ========== СТИЛИ ДЛЯ МОДАЛЬНЫХ ОКОН ========== */
+
+/* Детали заказа в окне просмотра */
+.order-details {
+    margin-top: 20px;
+}
+
+.order-detail-row {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.order-detail-row:last-child {
+    border-bottom: none;
+}
+
+.order-detail-label {
+    font-weight: bold;
+    color: #2c3e50;
+    width: 150px;
+    flex-shrink: 0;
+}
+
+.order-detail-value {
+    color: #34495e;
+    flex: 1;
+}
+
+/* Список товаров в заказе */
+.order-goods-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.order-goods-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-goods-list li:last-child {
+    border-bottom: none;
+}
+
+/* Форма редактирования */
+#edit-order-form {
+    margin-top: 20px;
+}
+
+#edit-order-form .form-group {
+    margin-bottom: 15px;
+}
+
+#edit-order-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #34495e;
+}
+
+#edit-order-form input,
+#edit-order-form select,
+#edit-order-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+#edit-order-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+#edit-order-form button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+}
+
+/* Модальное окно удаления */
+#delete-modal .modal-content {
+    max-width: 400px;
+    text-align: center;
+}
+
+#delete-modal p {
+    margin: 25px 0;
+    font-size: 1.1rem;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.modal-buttons button {
+    flex: 1;
+    max-width: 150px;
+}
+
+/* Загрузка */
+.loading {
+    text-align: center;
+    padding: 50px;
+    color: #7f8c8d;
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 768px) {
+    .order-detail-row {
+        flex-direction: column;
+    }
+    
+    .order-detail-label {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    .modal-content {
+        margin: 20px;
+        padding: 20px;
+    }
+    
+    .order-actions {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        width: 100%;
+    }
+}
