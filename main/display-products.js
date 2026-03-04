@@ -131,7 +131,61 @@ function displayAllProducts(products) {
         return;
     }
     
-    if (!products || products.length === 0) {
+    // ПРОВЕРЯЕМ, ЧТО products - ЭТО МАССИВ
+    if (!products) {
+        console.error('products = null/undefined');
+        goodsContainer.innerHTML = `
+            <div class="no-goods">
+                <p>Ошибка загрузки товаров</p>
+                <p class="text-muted">Нет данных от сервера</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // ЕСЛИ ЭТО НЕ МАССИВ, ПЫТАЕМСЯ ПРЕОБРАЗОВАТЬ
+    if (!Array.isArray(products)) {
+        console.log('products не массив, пробуем преобразовать:', products);
+        
+        // Если это объект с полем contents (от прокси)
+        if (products.contents && typeof products.contents === 'string') {
+            try {
+                products = JSON.parse(products.contents);
+                console.log('Распарсили contents, получили:', products);
+            } catch (e) {
+                console.error('Ошибка парсинга contents:', e);
+                goodsContainer.innerHTML = `
+                    <div class="no-goods">
+                        <p>Ошибка формата данных</p>
+                    </div>
+                `;
+                return;
+            }
+        }
+        
+        // Если это объект с числовыми ключами (как массив, но объект)
+        if (!Array.isArray(products) && typeof products === 'object') {
+            const possibleArray = Object.values(products);
+            if (possibleArray.length > 0 && possibleArray[0] && possibleArray[0].id) {
+                console.log('Преобразовали объект в массив через Object.values');
+                products = possibleArray;
+            }
+        }
+        
+        // Если после всех преобразований все еще не массив
+        if (!Array.isArray(products)) {
+            console.error('Не удалось преобразовать в массив:', products);
+            goodsContainer.innerHTML = `
+                <div class="no-goods">
+                    <p>Ошибка формата данных от сервера</p>
+                </div>
+            `;
+            return;
+        }
+    }
+    
+    // ТЕПЕРЬ МОЖНО ИСПОЛЬЗОВАТЬ forEach
+    if (products.length === 0) {
         goodsContainer.innerHTML = `
             <div class="no-goods">
                 <p>Товары не найдены</p>
@@ -151,6 +205,8 @@ function displayAllProducts(products) {
             goodsContainer.appendChild(card);
         }
     });
+    
+    console.log(`Отображено ${products.length} товаров`);
 }
 
 /**
@@ -193,6 +249,42 @@ async function loadGoods() {
         let goods = await getGoods(params);
         console.log('Получены товары:', goods);
         
+        // ПРОВЕРЯЕМ И ПРЕОБРАЗУЕМ ЕСЛИ НУЖНО
+        if (!goods) {
+            throw new Error('Сервер вернул пустой ответ');
+        }
+        
+        // Если goods - это объект с contents (от прокси)
+        if (goods.contents && typeof goods.contents === 'string') {
+            try {
+                goods = JSON.parse(goods.contents);
+                console.log('Распарсили contents в loadGoods');
+            } catch (e) {
+                console.error('Ошибка парсинга contents:', e);
+                throw new Error('Ошибка парсинга данных');
+            }
+        }
+        
+        // Убеждаемся, что это массив
+        if (!Array.isArray(goods)) {
+            console.warn('goods не массив, пробуем преобразовать');
+            
+            // Если это объект с числовыми ключами
+            if (typeof goods === 'object') {
+                const possibleArray = Object.values(goods);
+                if (possibleArray.length > 0 && possibleArray[0] && possibleArray[0].id) {
+                    goods = possibleArray;
+                    console.log('Преобразовали в массив через Object.values');
+                }
+            }
+            
+            // Если все еще не массив - ошибка
+            if (!Array.isArray(goods)) {
+                console.error('Не удалось преобразовать goods в массив:', goods);
+                throw new Error('Неверный формат данных от сервера');
+            }
+        }
+        
         // Сохраняем в глобальную переменную
         if (!window.allGoods) window.allGoods = [];
         
@@ -228,7 +320,7 @@ async function loadGoods() {
             goodsContainer.innerHTML = `
                 <div class="no-goods">
                     <p>Ошибка загрузки товаров</p>
-                    <p class="text-muted">Проверьте подключение к интернету</p>
+                    <p class="text-muted">${error.message || 'Проверьте подключение к интернету'}</p>
                     <button onclick="location.reload()" class="btn-primary mt-3">
                         Обновить страницу
                     </button>
