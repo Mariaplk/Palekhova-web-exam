@@ -82,6 +82,7 @@ async function loadGoods() {
         let goods;
         try {
             goods = await getGoods(params);
+            console.log('Получены товары (сырые):', goods);
         } catch (error) {
             console.error('Ошибка при вызове getGoods:', error);
             goodsContainer.innerHTML = '<p class="no-goods">Ошибка соединения с сервером. Проверьте интернет или API ключ.</p>';
@@ -93,17 +94,52 @@ async function loadGoods() {
             return;
         }
         
-        // Проверяем, что получили массив
-        if (!goods || !Array.isArray(goods)) {
-            console.error('Получены неверные данные от сервера:', goods);
+        // ========== УЛУЧШЕННАЯ ПРОВЕРКА ДАННЫХ ==========
+        // Проверяем, что данные вообще существуют
+        if (!goods) {
+            console.error('Нет данных от сервера (goods = null/undefined)');
+            goodsContainer.innerHTML = '<p class="no-goods">Нет данных от сервера</p>';
+            isLoading = false;
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = 'Повторить попытку';
+            }
+            return;
+        }
+        
+        // ЕСЛИ ДАННЫЕ ПРИШЛИ КАК ОБЪЕКТ С ПОЛЕМ contents (от прокси allorigins.win)
+        if (goods.contents && typeof goods.contents === 'string') {
+            try {
+                console.log('Обнаружено поле contents, парсим...');
+                goods = JSON.parse(goods.contents);
+                console.log('После парсинга contents:', goods);
+            } catch (e) {
+                console.error('Ошибка парсинга contents:', e);
+                goodsContainer.innerHTML = '<p class="no-goods">Ошибка формата данных от прокси</p>';
+                isLoading = false;
+                if (loadMoreBtn) {
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.textContent = 'Повторить попытку';
+                }
+                return;
+            }
+        }
+        
+        // Финальная проверка - должны получить массив
+        if (!Array.isArray(goods)) {
+            console.error('Данные не являются массивом даже после обработки:', goods);
+            console.log('Тип данных:', typeof goods);
             goodsContainer.innerHTML = '<p class="no-goods">Ошибка формата данных от сервера</p>';
             isLoading = false;
             if (loadMoreBtn) {
                 loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = hasMore ? 'Загрузить ещё' : 'Все товары загружены';
+                loadMoreBtn.textContent = 'Повторить попытку';
             }
             return;
         }
+        
+        console.log(`Успешно получили массив из ${goods.length} товаров`);
+        // ========== КОНЕЦ ПРОВЕРКИ ==========
         
         if (goods.length === 0) {
             hasMore = false;
