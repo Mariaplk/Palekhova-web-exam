@@ -1,12 +1,14 @@
 /**
  * СКРИПТ ДЛЯ ОТОБРАЖЕНИЯ ТОВАРОВ НА ГЛАВНОЙ СТРАНИЦЕ
- * Отвечает за загрузку и отображение товаров из API
  */
+
+// Глобальная переменная для хранения загруженных товаров
+window.productsData = null;
+window.allGoods = []; // Для совместимости с фильтрами
 
 // Текущее состояние страницы
 let currentPage = 1;
 let currentSort = 'default';
-let allGoods = []; // Кеш всех загруженных товаров
 let isLoading = false;
 let hasMore = true;
 
@@ -16,46 +18,145 @@ const loadMoreBtn = document.getElementById('load-more');
 const sortSelect = document.getElementById('sort-select');
 
 /**
- * ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+ * ФОРМАТИРОВАНИЕ ЦЕНЫ (с пробелами)
  */
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Скрипт display-products.js загружен');
-    
-    // Загружаем первую страницу товаров
-    loadGoods();
-    
-    // Добавляем обработчик для сортировки
-    if (sortSelect) {
-        sortSelect.addEventListener('change', () => {
-            currentSort = sortSelect.value;
-            // При изменении сортировки начинаем с первой страницы
-            currentPage = 1;
-            hasMore = true;
-            if (goodsContainer) {
-                goodsContainer.innerHTML = '<div class="loading">Загрузка товаров...</div>';
-            }
-            loadGoods();
-        });
-    }
-    
-    // Добавляем обработчик для кнопки "Загрузить ещё"
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', () => {
-            if (!isLoading && hasMore) {
-                loadMoreGoods();
-            }
-        });
-    }
-    
-    // Обновляем счетчик корзины
-    updateCartCount();
-});
+function formatPrice(price) {
+    if (!price && price !== 0) return '0';
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
 
 /**
- * ЗАГРУЗКА ТОВАРОВ С УЧЕТОМ ПАГИНАЦИИ
+ * СОЗДАНИЕ ЗВЕЗД РЕЙТИНГА
+ */
+function createStars(rating) {
+    rating = rating || 0;
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    let starsHTML = '';
+    for (let i = 0; i < 5; i++) {
+        if (i < fullStars) {
+            starsHTML += '★'; // Полная звезда
+        } else if (i === fullStars && hasHalfStar) {
+            starsHTML += '½'; // Половина звезды
+        } else {
+            starsHTML += '☆'; // Пустая звезда
+        }
+    }
+    return starsHTML;
+}
+
+/**
+ * СОЗДАНИЕ КАРТОЧКИ ТОВАРА
+ */
+function createProductCard(product) {
+    if (!product || !product.id) return null;
+    
+    // Наличие скидки
+    const hasDiscount = product.discount_price && 
+        product.discount_price < product.actual_price;
+    const discountPercent = hasDiscount ? 
+        Math.round((1 - product.discount_price / product.actual_price) * 100) : 0;
+    
+    // Цена для отображения
+    const displayPrice = hasDiscount ? product.discount_price : product.actual_price;
+    const originalPrice = product.actual_price;
+    
+    // Сокращение названия
+    const shortName = product.name && product.name.length > 60 ? 
+        product.name.substring(0, 60) + '...' : product.name || 'Без названия';
+    
+    // Проверяем, есть ли товар уже в корзине
+    let cart = [];
+    try {
+        cart = JSON.parse(localStorage.getItem('cart')) || [];
+    } catch (error) {
+        console.error('Ошибка при чтении корзины:', error);
+    }
+    
+    const isInCart = cart.includes(product.id);
+    
+    // Кнопка в зависимости от состояния
+    let buttonClass = 'good-card__button';
+    let buttonText = 'В корзину';
+    let disabled = '';
+    
+    if (isInCart) {
+        buttonClass += ' in-cart';
+        buttonText = '✓ В корзине';
+        disabled = 'disabled';
+    }
+    
+    // Создаем карточку
+    const card = document.createElement('div');
+    card.className = 'good-card';
+    card.dataset.id = product.id;
+    
+    card.innerHTML = `
+        <div class="good-card__image-container">
+            <img src="${product.image_url || 'https://via.placeholder.com/200'}" 
+                 alt="${product.name}" 
+                 class="good-card__image"
+                 onerror="this.src='https://via.placeholder.com/200'">
+            ${hasDiscount ? `
+                <span class="good-card__discount-badge">-${discountPercent}%</span>
+            ` : ''}
+        </div>
+        <h3 class="good-card__title" title="${product.name || ''}">${shortName}</h3>
+        <div class="good-card__rating">
+            <span class="stars">${createStars(product.rating)}</span>
+            <span class="rating-value">${product.rating ? product.rating.toFixed(1) : '0.0'}</span>
+        </div>
+        <div class="good-card__category">
+            ${product.main_category || ''}
+        </div>
+        <div class="good-card__price">
+            ${formatPrice(displayPrice)} ₽
+            ${hasDiscount ? `<span class="good-card__old-price">${formatPrice(originalPrice)} ₽</span>` : ''}
+        </div>
+        <button class="${buttonClass}" data-product-id="${product.id}" ${disabled}>
+            ${buttonText}
+        </button>
+    `;
+    
+    return card;
+}
+
+/**
+ * ОТОБРАЖЕНИЕ ВСЕХ ТОВАРОВ
+ */
+function displayAllProducts(products) {
+    if (!goodsContainer) {
+        console.error('Контейнер goods-container не найден');
+        return;
+    }
+    
+    if (!products || products.length === 0) {
+        goodsContainer.innerHTML = `
+            <div class="no-goods">
+                <p>Товары не найдены</p>
+                <p class="text-muted">Попробуйте изменить параметры поиска</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Очищаем контейнер
+    goodsContainer.innerHTML = '';
+    
+    // Добавляем все карточки
+    products.forEach(product => {
+        const card = createProductCard(product);
+        if (card) {
+            goodsContainer.appendChild(card);
+        }
+    });
+}
+
+/**
+ * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ
  */
 async function loadGoods() {
-    // Проверяем, есть ли контейнер
     if (!goodsContainer) {
         console.error('Контейнер goods-container не найден!');
         return;
@@ -64,13 +165,23 @@ async function loadGoods() {
     if (isLoading) return;
     
     isLoading = true;
+    
+    // Показываем загрузку только на первой странице
+    if (currentPage === 1) {
+        goodsContainer.innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Загружаем товары...</p>
+            </div>
+        `;
+    }
+    
     if (loadMoreBtn) {
         loadMoreBtn.disabled = true;
         loadMoreBtn.textContent = 'Загрузка...';
     }
     
     try {
-        // Формируем параметры запроса
         const params = {
             page: currentPage,
             per_page: 12
@@ -78,104 +189,51 @@ async function loadGoods() {
         
         console.log(`Загружаем страницу ${currentPage}...`);
         
-        // Пробуем загрузить товары
-        let goods;
-        try {
-            goods = await getGoods(params);
-            console.log('Получены товары (сырые):', goods);
-        } catch (error) {
-            console.error('Ошибка при вызове getGoods:', error);
-            goodsContainer.innerHTML = '<p class="no-goods">Ошибка соединения с сервером. Проверьте интернет или API ключ.</p>';
-            isLoading = false;
-            if (loadMoreBtn) {
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = 'Повторить попытку';
-            }
-            return;
-        }
+        // Загружаем товары через API
+        let goods = await getGoods(params);
+        console.log('Получены товары:', goods);
         
-        // ========== УЛУЧШЕННАЯ ПРОВЕРКА ДАННЫХ ==========
-        // Проверяем, что данные вообще существуют
-        if (!goods) {
-            console.error('Нет данных от сервера (goods = null/undefined)');
-            goodsContainer.innerHTML = '<p class="no-goods">Нет данных от сервера</p>';
-            isLoading = false;
-            if (loadMoreBtn) {
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = 'Повторить попытку';
-            }
-            return;
-        }
+        // Сохраняем в глобальную переменную
+        if (!window.allGoods) window.allGoods = [];
         
-        // ЕСЛИ ДАННЫЕ ПРИШЛИ КАК ОБЪЕКТ С ПОЛЕМ contents (от прокси allorigins.win)
-        if (goods.contents && typeof goods.contents === 'string') {
-            try {
-                console.log('Обнаружено поле contents, парсим...');
-                goods = JSON.parse(goods.contents);
-                console.log('После парсинга contents:', goods);
-            } catch (e) {
-                console.error('Ошибка парсинга contents:', e);
-                goodsContainer.innerHTML = '<p class="no-goods">Ошибка формата данных от прокси</p>';
-                isLoading = false;
-                if (loadMoreBtn) {
-                    loadMoreBtn.disabled = false;
-                    loadMoreBtn.textContent = 'Повторить попытку';
-                }
-                return;
-            }
-        }
-        
-        // Финальная проверка - должны получить массив
-        if (!Array.isArray(goods)) {
-            console.error('Данные не являются массивом даже после обработки:', goods);
-            console.log('Тип данных:', typeof goods);
-            goodsContainer.innerHTML = '<p class="no-goods">Ошибка формата данных от сервера</p>';
-            isLoading = false;
-            if (loadMoreBtn) {
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = 'Повторить попытку';
-            }
-            return;
-        }
-        
-        console.log(`Успешно получили массив из ${goods.length} товаров`);
-        // ========== КОНЕЦ ПРОВЕРКИ ==========
-        
-        if (goods.length === 0) {
-            hasMore = false;
-            if (currentPage === 1) {
-                goodsContainer.innerHTML = '<p class="no-goods">Товары не найдены</p>';
-            }
-        } else {
-            // Добавляем в общий кеш
-            allGoods = [...allGoods, ...goods];
-            
-            // Отображаем товары
-            if (typeof displayGoods === 'function') {
-                displayGoods(goods, currentPage === 1);
-            } else {
-                // Если функция не найдена, используем простой вывод
-                console.warn('Функция displayGoods не найдена, используем createSimpleCard');
-                if (currentPage === 1) {
-                    goodsContainer.innerHTML = '';
-                }
-                goods.forEach(good => {
-                    const card = createSimpleCard(good);
-                    if (card) {
-                        goodsContainer.appendChild(card);
-                    }
-                });
-            }
-            
-            // Проверяем, есть ли еще товары
-            if (goods.length < 12) {
-                hasMore = false;
-            }
-        }
-    } catch (error) {
-        console.error('Необработанная ошибка в loadGoods:', error);
         if (currentPage === 1) {
-            goodsContainer.innerHTML = '<p class="no-goods">Произошла ошибка. Обновите страницу.</p>';
+            window.allGoods = goods;
+            window.productsData = goods;
+        } else {
+            window.allGoods = [...window.allGoods, ...goods];
+            window.productsData = window.allGoods;
+        }
+        
+        // Отображаем товары
+        if (currentPage === 1) {
+            displayAllProducts(goods);
+        } else {
+            goods.forEach(product => {
+                const card = createProductCard(product);
+                if (card) {
+                    goodsContainer.appendChild(card);
+                }
+            });
+        }
+        
+        // Проверяем, есть ли еще товары
+        if (goods.length < 12) {
+            hasMore = false;
+        }
+        
+    } catch (error) {
+        console.error('Ошибка загрузки товаров:', error);
+        
+        if (currentPage === 1) {
+            goodsContainer.innerHTML = `
+                <div class="no-goods">
+                    <p>Ошибка загрузки товаров</p>
+                    <p class="text-muted">Проверьте подключение к интернету</p>
+                    <button onclick="location.reload()" class="btn-primary mt-3">
+                        Обновить страницу
+                    </button>
+                </div>
+            `;
         }
     } finally {
         isLoading = false;
@@ -187,129 +245,128 @@ async function loadGoods() {
 }
 
 /**
- * ЗАГРУЗКА СЛЕДУЮЩЕЙ СТРАНИЦЫ ТОВАРОВ
+ * ЗАГРУЗКА СЛЕДУЮЩЕЙ СТРАНИЦЫ
  */
 function loadMoreGoods() {
-    currentPage++;
-    loadGoods();
-}
-
-/**
- * ПЕРЕЗАГРУЗКА КАТАЛОГА (с первой страницы)
- */
-function reloadCatalog() {
-    currentPage = 1;
-    hasMore = true;
-    allGoods = [];
-    if (goodsContainer) {
-        goodsContainer.innerHTML = '<div class="loading">Загрузка товаров...</div>';
+    if (!isLoading && hasMore) {
+        currentPage++;
+        loadGoods();
     }
-    loadGoods();
 }
 
 /**
- * ПОЛУЧЕНИЕ ВСЕХ ЗАГРУЖЕННЫХ ТОВАРОВ
- * @returns {Array} - массив всех товаров
- */
-function getAllGoods() {
-    return allGoods;
-}
-
-/**
- * ОБНОВЛЕНИЕ СЧЕТЧИКА КОРЗИНЫ В ШАПКЕ
+ * ОБНОВЛЕНИЕ СЧЕТЧИКА КОРЗИНЫ
  */
 function updateCartCount() {
-    const cart = getCart();
-    const countElements = document.querySelectorAll('.cart-count');
-    countElements.forEach(el => {
-        el.textContent = cart.length;
-    });
-}
-
-/**
- * ПОЛУЧЕНИЕ КОРЗИНЫ ИЗ LOCALSTORAGE
- * @returns {Array} - массив ID товаров
- */
-function getCart() {
     try {
-        const cart = localStorage.getItem('cart');
-        return cart ? JSON.parse(cart) : [];
-    } catch (e) {
-        console.error('Ошибка чтения корзины:', e);
-        return [];
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const countElements = document.querySelectorAll('.cart-count');
+        countElements.forEach(el => {
+            el.textContent = cart.length;
+        });
+    } catch (error) {
+        console.error('Ошибка обновления счетчика:', error);
     }
 }
 
 /**
- * СОХРАНЕНИЕ КОРЗИНЫ В LOCALSTORAGE
- * @param {Array} cart - массив ID товаров
+ * ДОБАВЛЕНИЕ ТОВАРА В КОРЗИНУ
  */
-function saveCart(cart) {
+function addToCart(productId) {
     try {
+        // Получаем текущую корзину
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        // Проверяем, есть ли уже товар
+        if (cart.includes(productId)) {
+            return false;
+        }
+        
+        // Добавляем новый товар
+        cart.push(productId);
+        
+        // Сохраняем
         localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Обновляем счетчик
         updateCartCount();
-    } catch (e) {
-        console.error('Ошибка сохранения корзины:', e);
+        
+        return true;
+    } catch (error) {
+        console.error('Ошибка добавления в корзину:', error);
+        return false;
     }
 }
 
 /**
- * ПРОСТАЯ КАРТОЧКА ТОВАРА (запасной вариант)
- * @param {Object} good - данные товара
- * @returns {HTMLElement} - DOM элемент
+ * ОБРАБОТЧИК КЛИКОВ ПО КНОПКАМ
  */
-function createSimpleCard(good) {
-    if (!good || !good.id) {
-        console.error('Неверные данные товара:', good);
-        return null;
-    }
-    
-    const card = document.createElement('div');
-    card.className = 'good-card';
-    card.dataset.id = good.id;
-    
-    const currentPrice = good.discount_price || good.actual_price || 0;
-    const imageUrl = good.image_url || 'https://via.placeholder.com/200';
-    const title = good.name || 'Без названия';
-    const rating = good.rating || 0;
-    
-    card.innerHTML = `
-        <img src="${imageUrl}" alt="${title}" class="good-card__image"
-             onerror="this.src='https://via.placeholder.com/200'">
-        <h3 class="good-card__title">${title.substring(0, 40)}${title.length > 40 ? '...' : ''}</h3>
-        <div class="good-card__rating">★ ${rating}</div>
-        <div class="good-card__price">${currentPrice} ₽</div>
-        <button class="good-card__button">В корзину</button>
-    `;
-    
-    // Добавляем обработчик на кнопку
-    const button = card.querySelector('.good-card__button');
-    if (button) {
-        button.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const cart = getCart();
-            if (!cart.includes(good.id)) {
-                cart.push(good.id);
-                saveCart(cart);
-                button.textContent = '✓ В корзине';
-                button.classList.add('in-cart');
-                if (typeof notifications !== 'undefined') {
-                    notifications.success('Товар добавлен в корзину');
+function setupEventListeners() {
+    // Обработчик для кнопок "В корзину"
+    document.addEventListener('click', function(e) {
+        const addButton = e.target.closest('.good-card__button:not(.in-cart)');
+        if (addButton) {
+            const productId = parseInt(addButton.dataset.productId);
+            if (productId) {
+                // Добавляем в корзину
+                const success = addToCart(productId);
+                
+                if (success) {
+                    // Меняем внешний вид кнопки
+                    addButton.classList.add('in-cart');
+                    addButton.textContent = '✓ В корзине';
+                    addButton.disabled = true;
+                    
+                    // Показываем уведомление
+                    if (typeof notifications !== 'undefined') {
+                        notifications.success('Товар добавлен в корзину');
+                    }
                 }
             }
+        }
+    });
+    
+    // Обработчик для сортировки
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            currentSort = sortSelect.value;
+            currentPage = 1;
+            hasMore = true;
+            loadGoods();
         });
     }
     
-    return card;
+    // Обработчик для кнопки "Загрузить ещё"
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreGoods);
+    }
 }
 
-// Делаем функции доступными глобально для других скриптов
-window.getAllGoods = getAllGoods;
-window.loadGoods = loadGoods;
-window.reloadCatalog = reloadCatalog;
-window.updateCartCount = updateCartCount;
-window.getCart = getCart;
-window.saveCart = saveCart;
-window.createSimpleCard = createSimpleCard;
+/**
+ * ИНИЦИАЛИЗАЦИЯ
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Скрипт display-products.js загружен');
+    
+    // Загружаем товары
+    loadGoods();
+    
+    // Настраиваем обработчики
+    setupEventListeners();
+    
+    // Обновляем счетчик корзины
+    updateCartCount();
+});
 
-console.log('✅ display-products.js полностью загружен и готов к работе');
+// Экспортируем функции для других скриптов
+window.getAllGoods = () => window.allGoods || [];
+window.loadGoods = loadGoods;
+window.reloadCatalog = () => {
+    currentPage = 1;
+    hasMore = true;
+    loadGoods();
+};
+window.updateCartCount = updateCartCount;
+window.addToCart = addToCart;
+
+console.log('✅ display-products.js готов к работе');
