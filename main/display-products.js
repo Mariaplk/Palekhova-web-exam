@@ -123,7 +123,7 @@ function createProductCard(product) {
 }
 
 /**
- * ОТОБРАЖЕНИЕ ВСЕХ ТОВАРОВ (С ЗАЩИТОЙ ОТ НЕПРАВИЛЬНОГО ТИПА)
+ * ОТОБРАЖЕНИЕ ВСЕХ ТОВАРОВ
  */
 function displayAllProducts(products) {
     if (!goodsContainer) {
@@ -131,7 +131,6 @@ function displayAllProducts(products) {
         return;
     }
     
-    // ========== ЗАЩИТА ОТ НЕПРАВИЛЬНОГО ТИПА ДАННЫХ ==========
     // Проверяем, что products вообще существует
     if (!products) {
         console.error('Ошибка: products = null/undefined');
@@ -157,7 +156,6 @@ function displayAllProducts(products) {
         `;
         return;
     }
-    // ========== КОНЕЦ ЗАЩИТЫ ==========
     
     // Проверяем, пустой ли массив
     if (products.length === 0) {
@@ -173,7 +171,7 @@ function displayAllProducts(products) {
     // Очищаем контейнер
     goodsContainer.innerHTML = '';
     
-    // Добавляем все карточки (теперь products ТОЧНО массив)
+    // Добавляем все карточки
     for (let i = 0; i < products.length; i++) {
         const product = products[i];
         const card = createProductCard(product);
@@ -186,7 +184,7 @@ function displayAllProducts(products) {
 }
 
 /**
- * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ (С ЗАЩИТОЙ)
+ * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ (С РУЧНЫМ ПАРСИНГОМ СТРОКИ)
  */
 async function loadGoods() {
     if (!goodsContainer) {
@@ -221,35 +219,45 @@ async function loadGoods() {
         
         console.log(`Загружаем страницу ${currentPage}...`);
         
-        // Загружаем товары через API
-        let goods = await getGoods(params);
-        console.log('Получены товары (сырые):', goods);
+        // ========== 1. ПОЛУЧАЕМ СТРОКУ ОТ API ==========
+        const goodsString = await getGoods(params);
+        console.log('✅ Получена строка от сервера (первые 100 символов):', 
+                    goodsString ? goodsString.substring(0, 100) : 'пустая строка');
         
-        // ========== ЗАЩИТА НА УРОВНЕ ЗАГРУЗКИ ==========
-        // Проверка на null/undefined
-        if (!goods) {
-            console.error('Товары не получены: goods =', goods);
-            throw new Error('Сервер не вернул данные');
+        // Проверяем, что строка не пустая
+        if (!goodsString) {
+            throw new Error('Сервер вернул пустой ответ');
         }
         
-        // Пытаемся привести к массиву, если это объект с числовыми ключами
-        if (!Array.isArray(goods) && typeof goods === 'object') {
-            console.log('Пробуем преобразовать объект в массив');
-            const possibleArray = Object.values(goods);
-            // Проверяем, похоже ли на массив товаров
-            if (possibleArray.length > 0 && possibleArray[0] && typeof possibleArray[0] === 'object' && possibleArray[0].id) {
-                goods = possibleArray;
-                console.log('✅ Преобразовали объект в массив');
-            }
+        // ========== 2. ПРЕВРАЩАЕМ СТРОКУ В МАССИВ ==========
+        let goods;
+        try {
+            goods = JSON.parse(goodsString);
+            console.log('✅ JSON распарсен успешно');
+            console.log('Тип после парсинга:', Array.isArray(goods) ? 'массив' : typeof goods);
+        } catch (e) {
+            console.error('❌ Ошибка парсинга JSON:', e);
+            console.error('Строка, которую не удалось распарсить:', goodsString);
+            throw new Error('Сервер вернул некорректный JSON');
         }
         
-        // Финальная проверка на массив
+        // ========== 3. ПРОВЕРЯЕМ, ЧТО ПОЛУЧИЛИ МАССИВ ==========
         if (!Array.isArray(goods)) {
-            console.error('Не удалось получить массив товаров. Тип:', typeof goods);
+            console.error('❌ Получен не массив, а:', typeof goods);
             console.error('Содержимое:', goods);
-            throw new Error('Сервер вернул данные в неправильном формате');
+            
+            // Если это объект с полем error - показываем ошибку сервера
+            if (goods && typeof goods === 'object') {
+                if (goods.error) {
+                    throw new Error(`Ошибка сервера: ${goods.error}`);
+                } else if (goods.message) {
+                    throw new Error(`Сообщение сервера: ${goods.message}`);
+                }
+            }
+            
+            throw new Error('Сервер вернул не массив товаров');
         }
-        // ========== КОНЕЦ ЗАЩИТЫ ==========
+        // ========== КОНЕЦ ПАРСИНГА ==========
         
         console.log(`✅ Успешно получили массив из ${goods.length} товаров`);
         
