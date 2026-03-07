@@ -123,7 +123,7 @@ function createProductCard(product) {
 }
 
 /**
- * ОТОБРАЖЕНИЕ ВСЕХ ТОВАРОВ
+ * ОТОБРАЖЕНИЕ ВСЕХ ТОВАРОВ (С ЗАЩИТОЙ ОТ НЕПРАВИЛЬНОГО ТИПА)
  */
 function displayAllProducts(products) {
     if (!goodsContainer) {
@@ -131,7 +131,36 @@ function displayAllProducts(products) {
         return;
     }
     
-    if (!products || products.length === 0) {
+    // ========== ЗАЩИТА ОТ НЕПРАВИЛЬНОГО ТИПА ДАННЫХ ==========
+    // Проверяем, что products вообще существует
+    if (!products) {
+        console.error('Ошибка: products = null/undefined');
+        goodsContainer.innerHTML = `
+            <div class="no-goods">
+                <p>Ошибка загрузки товаров</p>
+                <p class="text-muted">Нет данных от сервера</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Проверяем, является ли products МАССИВОМ
+    if (!Array.isArray(products)) {
+        console.error('Ошибка: products НЕ является массивом!', products);
+        console.log('Тип полученных данных:', typeof products);
+        
+        goodsContainer.innerHTML = `
+            <div class="no-goods">
+                <p>Ошибка формата данных</p>
+                <p class="text-muted">Сервер вернул неправильный формат</p>
+            </div>
+        `;
+        return;
+    }
+    // ========== КОНЕЦ ЗАЩИТЫ ==========
+    
+    // Проверяем, пустой ли массив
+    if (products.length === 0) {
         goodsContainer.innerHTML = `
             <div class="no-goods">
                 <p>Товары не найдены</p>
@@ -144,17 +173,20 @@ function displayAllProducts(products) {
     // Очищаем контейнер
     goodsContainer.innerHTML = '';
     
-    // Добавляем все карточки
-    products.forEach(product => {
+    // Добавляем все карточки (теперь products ТОЧНО массив)
+    for (let i = 0; i < products.length; i++) {
+        const product = products[i];
         const card = createProductCard(product);
         if (card) {
             goodsContainer.appendChild(card);
         }
-    });
+    }
+    
+    console.log(`✅ Отображено ${products.length} товаров`);
 }
 
 /**
- * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ
+ * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ (С ЗАЩИТОЙ)
  */
 async function loadGoods() {
     if (!goodsContainer) {
@@ -191,7 +223,35 @@ async function loadGoods() {
         
         // Загружаем товары через API
         let goods = await getGoods(params);
-        console.log('Получены товары:', goods);
+        console.log('Получены товары (сырые):', goods);
+        
+        // ========== ЗАЩИТА НА УРОВНЕ ЗАГРУЗКИ ==========
+        // Проверка на null/undefined
+        if (!goods) {
+            console.error('Товары не получены: goods =', goods);
+            throw new Error('Сервер не вернул данные');
+        }
+        
+        // Пытаемся привести к массиву, если это объект с числовыми ключами
+        if (!Array.isArray(goods) && typeof goods === 'object') {
+            console.log('Пробуем преобразовать объект в массив');
+            const possibleArray = Object.values(goods);
+            // Проверяем, похоже ли на массив товаров
+            if (possibleArray.length > 0 && possibleArray[0] && typeof possibleArray[0] === 'object' && possibleArray[0].id) {
+                goods = possibleArray;
+                console.log('✅ Преобразовали объект в массив');
+            }
+        }
+        
+        // Финальная проверка на массив
+        if (!Array.isArray(goods)) {
+            console.error('Не удалось получить массив товаров. Тип:', typeof goods);
+            console.error('Содержимое:', goods);
+            throw new Error('Сервер вернул данные в неправильном формате');
+        }
+        // ========== КОНЕЦ ЗАЩИТЫ ==========
+        
+        console.log(`✅ Успешно получили массив из ${goods.length} товаров`);
         
         // Сохраняем в глобальную переменную
         if (!window.allGoods) window.allGoods = [];
@@ -208,12 +268,13 @@ async function loadGoods() {
         if (currentPage === 1) {
             displayAllProducts(goods);
         } else {
-            goods.forEach(product => {
+            for (let i = 0; i < goods.length; i++) {
+                const product = goods[i];
                 const card = createProductCard(product);
                 if (card) {
                     goodsContainer.appendChild(card);
                 }
-            });
+            }
         }
         
         // Проверяем, есть ли еще товары
@@ -228,7 +289,7 @@ async function loadGoods() {
             goodsContainer.innerHTML = `
                 <div class="no-goods">
                     <p>Ошибка загрузки товаров</p>
-                    <p class="text-muted">Проверьте подключение к интернету</p>
+                    <p class="text-muted">${error.message || 'Проверьте подключение к интернету'}</p>
                     <button onclick="location.reload()" class="btn-primary mt-3">
                         Обновить страницу
                     </button>
