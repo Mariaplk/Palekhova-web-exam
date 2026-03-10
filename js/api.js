@@ -5,7 +5,6 @@
 // ========== НАСТРОЙКИ API ==========
 const API_BASE_URL = 'https://edu.std-900.ist.mospolytech.ru/exam-2024-1/api';
 const API_KEY = '4077aed9-7913-4553-941e-c2445b06e012';
-
 /**
  * ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: формирует URL с параметрами
  */
