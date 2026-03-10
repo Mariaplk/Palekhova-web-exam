@@ -25,6 +25,7 @@ function buildApiUrl(endpoint, params = {}) {
  * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ GET-ЗАПРОСОВ
  * ПОЛУЧАЕМ СТРОКУ, А НЕ ГОТОВЫЙ JSON!
  */
+
 async function apiGet(endpoint, params = {}) {
     try {
         const url = buildApiUrl(endpoint, params);
