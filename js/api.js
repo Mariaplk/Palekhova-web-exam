@@ -5,6 +5,7 @@
 // ========== НАСТРОЙКИ API ==========
 const API_BASE_URL = 'https://edu.std-900.ist.mospolytech.ru/exam-2024-1/api';
 const API_KEY = '4077aed9-7913-4553-941e-c2445b06e012';
+
 /**
  * ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: формирует URL с параметрами
  */
@@ -23,9 +24,8 @@ function buildApiUrl(endpoint, params = {}) {
 
 /**
  * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ GET-ЗАПРОСОВ
- * ПОЛУЧАЕМ СТРОКУ, А НЕ ГОТОВЫЙ JSON!
+ * ПОЛУЧАЕМ ГОТОВЫЙ JSON!
  */
-
 async function apiGet(endpoint, params = {}) {
     try {
         const url = buildApiUrl(endpoint, params);
@@ -38,11 +38,11 @@ async function apiGet(endpoint, params = {}) {
             throw new Error(`HTTP ошибка! Статус: ${response.status}, Сообщение: ${errorText}`);
         }
         
-        // ========== ПОЛУЧАЕМ СТРОКУ, А НЕ JSON ==========
-        const responseText = await response.text(); // ← ПОЛУЧАЕМ СТРОКУ!
-        console.log('Получена строка от сервера (первые 100 символов):', responseText.substring(0, 100));
+        // ========== ПОЛУЧАЕМ ГОТОВЫЙ JSON ==========
+        const data = await response.json(); // ← ПОЛУЧАЕМ УЖЕ РАСПАРСЕННЫЙ ОБЪЕКТ!
+        console.log('Получены данные:', data);
         
-        return responseText; // ← ВОЗВРАЩАЕМ СТРОКУ!
+        return data; // ← ВОЗВРАЩАЕМ ОБЪЕКТ!
         
     } catch (error) {
         console.error('Ошибка в GET запросе:', error);
@@ -50,7 +50,9 @@ async function apiGet(endpoint, params = {}) {
     }
 }
 
-// Остальные функции (POST, PUT, DELETE) пока оставляем как есть
+/**
+ * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ POST-ЗАПРОСОВ
+ */
 async function apiPost(endpoint, data) {
     try {
         const url = buildApiUrl(endpoint);
@@ -74,6 +76,9 @@ async function apiPost(endpoint, data) {
     }
 }
 
+/**
+ * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ PUT-ЗАПРОСОВ
+ */
 async function apiPut(endpoint, data) {
     try {
         const url = buildApiUrl(endpoint);
@@ -97,6 +102,9 @@ async function apiPut(endpoint, data) {
     }
 }
 
+/**
+ * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ DELETE-ЗАПРОСОВ
+ */
 async function apiDelete(endpoint) {
     try {
         const url = buildApiUrl(endpoint);
@@ -118,7 +126,6 @@ async function apiDelete(endpoint) {
 
 // ========== ФУНКЦИИ ДЛЯ РАБОТЫ С ТОВАРАМИ ==========
 async function getGoods(params = {}) {
-    // ВЕРНЕТСЯ СТРОКА!
     return apiGet('/goods', params);
 }
 
@@ -151,4 +158,4 @@ async function deleteOrder(orderId) {
     return apiDelete(`/orders/${orderId}`);
 }
 
-console.log('✅ api.js загружен (версия с ручным парсингом)');
+console.log('✅ api.js загружен (версия с JSON)');
