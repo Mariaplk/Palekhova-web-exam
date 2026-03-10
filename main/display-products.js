@@ -36,11 +36,11 @@ function createStars(rating) {
     let starsHTML = '';
     for (let i = 0; i < 5; i++) {
         if (i < fullStars) {
-            starsHTML += '★'; // Полная звезда
+            starsHTML += '★';
         } else if (i === fullStars && hasHalfStar) {
-            starsHTML += '½'; // Половина звезды
+            starsHTML += '½';
         } else {
-            starsHTML += '☆'; // Пустая звезда
+            starsHTML += '☆';
         }
     }
     return starsHTML;
@@ -52,21 +52,17 @@ function createStars(rating) {
 function createProductCard(product) {
     if (!product || !product.id) return null;
     
-    // Наличие скидки
     const hasDiscount = product.discount_price && 
         product.discount_price < product.actual_price;
     const discountPercent = hasDiscount ? 
         Math.round((1 - product.discount_price / product.actual_price) * 100) : 0;
     
-    // Цена для отображения
     const displayPrice = hasDiscount ? product.discount_price : product.actual_price;
     const originalPrice = product.actual_price;
     
-    // Сокращение названия
     const shortName = product.name && product.name.length > 60 ? 
         product.name.substring(0, 60) + '...' : product.name || 'Без названия';
     
-    // Проверяем, есть ли товар уже в корзине
     let cart = [];
     try {
         cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -76,7 +72,6 @@ function createProductCard(product) {
     
     const isInCart = cart.includes(product.id);
     
-    // Кнопка в зависимости от состояния
     let buttonClass = 'good-card__button';
     let buttonText = 'В корзину';
     let disabled = '';
@@ -87,7 +82,6 @@ function createProductCard(product) {
         disabled = 'disabled';
     }
     
-    // Создаем карточку
     const card = document.createElement('div');
     card.className = 'good-card';
     card.dataset.id = product.id;
@@ -131,23 +125,8 @@ function displayAllProducts(products) {
         return;
     }
     
-    // Проверяем, что products вообще существует
-    if (!products) {
-        console.error('Ошибка: products = null/undefined');
-        goodsContainer.innerHTML = `
-            <div class="no-goods">
-                <p>Ошибка загрузки товаров</p>
-                <p class="text-muted">Нет данных от сервера</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Проверяем, является ли products МАССИВОМ
-    if (!Array.isArray(products)) {
-        console.error('Ошибка: products НЕ является массивом!', products);
-        console.log('Тип полученных данных:', typeof products);
-        
+    if (!products || !Array.isArray(products)) {
+        console.error('Ошибка: products не является массивом', products);
         goodsContainer.innerHTML = `
             <div class="no-goods">
                 <p>Ошибка формата данных</p>
@@ -157,7 +136,6 @@ function displayAllProducts(products) {
         return;
     }
     
-    // Проверяем, пустой ли массив
     if (products.length === 0) {
         goodsContainer.innerHTML = `
             <div class="no-goods">
@@ -168,13 +146,10 @@ function displayAllProducts(products) {
         return;
     }
     
-    // Очищаем контейнер
     goodsContainer.innerHTML = '';
     
-    // Добавляем все карточки
     for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        const card = createProductCard(product);
+        const card = createProductCard(products[i]);
         if (card) {
             goodsContainer.appendChild(card);
         }
@@ -184,7 +159,7 @@ function displayAllProducts(products) {
 }
 
 /**
- * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ (С РУЧНЫМ ПАРСИНГОМ СТРОКИ)
+ * ОСНОВНАЯ ФУНКЦИЯ ЗАГРУЗКИ - ЭТО ТО, ЧЕГО НЕ ХВАТАЛО!
  */
 async function loadGoods() {
     if (!goodsContainer) {
@@ -196,7 +171,6 @@ async function loadGoods() {
     
     isLoading = true;
     
-    // Показываем загрузку только на первой странице
     if (currentPage === 1) {
         goodsContainer.innerHTML = `
             <div class="loading">
@@ -219,49 +193,38 @@ async function loadGoods() {
         
         console.log(`Загружаем страницу ${currentPage}...`);
         
-        // ========== 1. ПОЛУЧАЕМ СТРОКУ ОТ API ==========
+        // 1. ПОЛУЧАЕМ СТРОКУ ОТ API
         const goodsString = await getGoods(params);
-        console.log('✅ Получена строка от сервера (первые 100 символов):', 
-                    goodsString ? goodsString.substring(0, 100) : 'пустая строка');
         
-        // Проверяем, что строка не пустая
         if (!goodsString) {
             throw new Error('Сервер вернул пустой ответ');
         }
         
-        // ========== 2. ПРЕВРАЩАЕМ СТРОКУ В МАССИВ ==========
-        let goods;
+        // 2. ПАРСИМ СТРОКУ В ОБЪЕКТ
+        let parsedData;
         try {
-            goods = JSON.parse(goodsString);
-            console.log('✅ JSON распарсен успешно');
-            console.log('Тип после парсинга:', Array.isArray(goods) ? 'массив' : typeof goods);
+            parsedData = JSON.parse(goodsString);
+            console.log('✅ JSON распарсен, ключи:', Object.keys(parsedData));
         } catch (e) {
             console.error('❌ Ошибка парсинга JSON:', e);
-            console.error('Строка, которую не удалось распарсить:', goodsString);
             throw new Error('Сервер вернул некорректный JSON');
         }
         
-        // ========== 3. ПРОВЕРЯЕМ, ЧТО ПОЛУЧИЛИ МАССИВ ==========
-        if (!Array.isArray(goods)) {
-            console.error('❌ Получен не массив, а:', typeof goods);
-            console.error('Содержимое:', goods);
-            
-            // Если это объект с полем error - показываем ошибку сервера
-            if (goods && typeof goods === 'object') {
-                if (goods.error) {
-                    throw new Error(`Ошибка сервера: ${goods.error}`);
-                } else if (goods.message) {
-                    throw new Error(`Сообщение сервера: ${goods.message}`);
-                }
-            }
-            
-            throw new Error('Сервер вернул не массив товаров');
+        // 3. ИЗВЛЕКАЕМ МАССИВ ТОВАРОВ
+        let goods;
+        if (parsedData.goods && Array.isArray(parsedData.goods)) {
+            goods = parsedData.goods;
+            console.log(`✅ Извлекли массив из goods, длина: ${goods.length}`);
+        } else if (Array.isArray(parsedData)) {
+            goods = parsedData;
+            console.log('✅ Данные уже являются массивом');
+        } else {
+            console.error('❌ Получен не массив, а:', typeof parsedData);
+            console.error('Содержимое:', parsedData);
+            throw new Error('Сервер вернул данные в непонятном формате');
         }
-        // ========== КОНЕЦ ПАРСИНГА ==========
         
-        console.log(`✅ Успешно получили массив из ${goods.length} товаров`);
-        
-        // Сохраняем в глобальную переменную
+        // 4. СОХРАНЯЕМ В ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
         if (!window.allGoods) window.allGoods = [];
         
         if (currentPage === 1) {
@@ -272,20 +235,16 @@ async function loadGoods() {
             window.productsData = window.allGoods;
         }
         
-        // Отображаем товары
+        // 5. ОТОБРАЖАЕМ ТОВАРЫ
         if (currentPage === 1) {
             displayAllProducts(goods);
         } else {
             for (let i = 0; i < goods.length; i++) {
-                const product = goods[i];
-                const card = createProductCard(product);
-                if (card) {
-                    goodsContainer.appendChild(card);
-                }
+                const card = createProductCard(goods[i]);
+                if (card) goodsContainer.appendChild(card);
             }
         }
         
-        // Проверяем, есть ли еще товары
         if (goods.length < 12) {
             hasMore = false;
         }
@@ -297,7 +256,7 @@ async function loadGoods() {
             goodsContainer.innerHTML = `
                 <div class="no-goods">
                     <p>Ошибка загрузки товаров</p>
-                    <p class="text-muted">${error.message || 'Проверьте подключение к интернету'}</p>
+                    <p class="text-muted">${error.message}</p>
                     <button onclick="location.reload()" class="btn-primary mt-3">
                         Обновить страницу
                     </button>
@@ -343,23 +302,13 @@ function updateCartCount() {
  */
 function addToCart(productId) {
     try {
-        // Получаем текущую корзину
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        
-        // Проверяем, есть ли уже товар
         if (cart.includes(productId)) {
             return false;
         }
-        
-        // Добавляем новый товар
         cart.push(productId);
-        
-        // Сохраняем
         localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Обновляем счетчик
         updateCartCount();
-        
         return true;
     } catch (error) {
         console.error('Ошибка добавления в корзину:', error);
@@ -371,31 +320,21 @@ function addToCart(productId) {
  * ОБРАБОТЧИК КЛИКОВ ПО КНОПКАМ
  */
 function setupEventListeners() {
-    // Обработчик для кнопок "В корзину"
     document.addEventListener('click', function(e) {
         const addButton = e.target.closest('.good-card__button:not(.in-cart)');
         if (addButton) {
             const productId = parseInt(addButton.dataset.productId);
-            if (productId) {
-                // Добавляем в корзину
-                const success = addToCart(productId);
-                
-                if (success) {
-                    // Меняем внешний вид кнопки
-                    addButton.classList.add('in-cart');
-                    addButton.textContent = '✓ В корзине';
-                    addButton.disabled = true;
-                    
-                    // Показываем уведомление
-                    if (typeof notifications !== 'undefined') {
-                        notifications.success('Товар добавлен в корзину');
-                    }
+            if (productId && addToCart(productId)) {
+                addButton.classList.add('in-cart');
+                addButton.textContent = '✓ В корзине';
+                addButton.disabled = true;
+                if (typeof notifications !== 'undefined') {
+                    notifications.success('Товар добавлен в корзину');
                 }
             }
         }
     });
     
-    // Обработчик для сортировки
     if (sortSelect) {
         sortSelect.addEventListener('change', () => {
             currentSort = sortSelect.value;
@@ -405,7 +344,6 @@ function setupEventListeners() {
         });
     }
     
-    // Обработчик для кнопки "Загрузить ещё"
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', loadMoreGoods);
     }
@@ -416,14 +354,8 @@ function setupEventListeners() {
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Скрипт display-products.js загружен');
-    
-    // Загружаем товары
     loadGoods();
-    
-    // Настраиваем обработчики
     setupEventListeners();
-    
-    // Обновляем счетчик корзины
     updateCartCount();
 });
 
